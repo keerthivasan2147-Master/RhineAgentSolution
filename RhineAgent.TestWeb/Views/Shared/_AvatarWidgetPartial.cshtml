@@ -1,0 +1,27 @@
+@inject Microsoft.AspNetCore.Antiforgery.IAntiforgery Antiforgery
+@{
+    var requestToken = Antiforgery.GetAndStoreTokens(Context).RequestToken;
+}
+
+<!-- Rhine AI Avatar Widget Integration -->
+<link rel="stylesheet" href="~/avatar-widget/avatar-widget.css" asp-append-version="true" />
+<script src="~/avatar-widget/avatar-widget.js" asp-append-version="true"></script>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        if (window.RhineAvatarWidget) {
+            window.rhineAvatar = new window.RhineAvatarWidget({
+                endpoint: "/api/agent/chat",
+                statusEndpoint: "/api/agent/status",
+                videoSrc: "/avatar-widget/assets/presenter.mp4?v=4",
+                posterSrc: "/avatar-widget/assets/presenter-ai.png?v=2",
+                kbUrl: "/kb.json",
+                title: "Rhine AI Presenter",
+                language: "en",
+                antiForgeryHeader: "RequestVerificationToken",
+                antiForgeryToken: "@requestToken",
+                autoOpen: true
+            });
+        }
+    });
+</script>

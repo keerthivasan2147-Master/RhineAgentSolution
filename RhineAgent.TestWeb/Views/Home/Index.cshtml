@@ -1,0 +1,78 @@
+@{
+    ViewData["Title"] = "RHINE AI Business Advisor — Staging";
+}
+
+<main class="shell">
+    <header>
+        <div>
+            <div class="eyebrow">RHINE MIDDLE EAST FZE · BUSINESS ARCHITECTURE & GOVERNED AI</div>
+            <h1>RHINE AI Business Advisor</h1>
+            <p class="sub">Turning Ideas & Challenges into Structured, Technology-Enabled Operating Businesses</p>
+        </div>
+        <span class="tag">RHINE ADVISOR STAGING</span>
+    </header>
+
+    <section class="top">
+        <div role="group" class="language">
+            <button type="button" data-lang="en" aria-pressed="true">English</button>
+            <button type="button" data-lang="ar" aria-pressed="false">العربية</button>
+        </div>
+        <div class="engine">
+            <div class="engineHead">
+                <strong id="engineName">RHINE AI Business Advisor</strong>
+                <span id="engineState">Business architecture, digital platforms & governed AI</span>
+            </div>
+            <button type="button" id="enable">Enable browser AI (experimental)</button>
+            <div id="progress"></div>
+        </div>
+    </section>
+
+    <section class="panel">
+        <div id="feed" role="log" aria-label="Conversation" aria-live="polite">
+            <article class="bubble assistant" dir="ltr">
+                <div class="who">RHINE Advisor</div>
+                <p>Welcome to RHINE. Whether you are starting with a business idea, establishing a new company, transforming an existing organization, or building an AI-enabled workforce, I can explain how RHINE helps turn your vision into structured, real-world operations. What would you like to build or improve?</p>
+            </article>
+        </div>
+        <div id="samples" class="samples">
+            <button type="button">What can RHINE build?</button>
+            <button type="button" class="meeting-btn" id="stagingMeetingBtn">📅 Schedule a Meeting</button>
+            <button type="button">From Idea to Operations</button>
+            <button type="button">Turn an idea into a company</button>
+            <button type="button">Transform or automate a company</button>
+            <button type="button">Need a platform or website</button>
+            <button type="button">AI agents for business roles</button>
+        </div>
+        <form id="ask">
+            <label for="question" class="sr">Ask RHINE Advisor</label>
+            <textarea id="question" rows="2" maxlength="650" required placeholder="Tell me what you want to build, improve, or automate..."></textarea>
+            <div class="actions">
+                <button id="submit" type="submit">Send</button>
+                <button id="mic" type="button" class="secondary">Microphone</button>
+                <button id="speak" type="button" class="secondary">Speak answer</button>
+                <button id="toggleCc" type="button" class="secondary">Captions [CC]</button>
+                <button id="clear" type="button" class="secondary">New chat</button>
+            </div>
+        </form>
+        <p id="status" role="status">RHINE Advisor active: Business guidance and governed AI capabilities.</p>
+    </section>
+
+    <section class="panel review">
+        <h2 id="reviewTitle">Knowledge and reply review</h2>
+        <p id="reviewDesc">Mark answers and export corrections. No automatic model training occurs.</p>
+        <div class="actions">
+            <button id="correct" type="button" class="secondary">Correct</button>
+            <button id="revise" type="button" class="secondary">Needs correction</button>
+            <input id="correction" aria-label="Suggested correction" maxlength="500" placeholder="Suggested correction" />
+            <button id="export" type="button">Export QA</button>
+        </div>
+    </section>
+
+    <footer>
+        <p>
+            RHINE AI Business Advisor is an interactive demonstration by RHINE Middle East FZE. AI responses provide structured operating models, platform design, and governed AI architecture guidance. The advisor does not directly perform legal incorporation, tax filings, or government licensing, and does not issue binding commercial guarantees. To discuss tailored solutions, arrange a consultation with the RHINE team.
+        </p>
+    </footer>
+</main>
+
+<script type="module" src="~/js/rhine-staging.js" asp-append-version="true"></script>

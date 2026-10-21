@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Rhine Voice Avatar - Standalone Demo</title>
+  <link rel="stylesheet" href="avatar-widget.css">
+  <style>
+    body {
+      margin: 0;
+      background: #091525;
+      color: #e9f0fa;
+      font-family: system-ui, -apple-system, sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      text-align: center;
+    }
+    .box {
+      max-width: 600px;
+      background: #102440;
+      border: 1px solid #3c5675;
+      border-radius: 16px;
+      padding: 32px;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.5);
+    }
+    h1 { margin: 0 0 10px; color: #ecd59e; font-size: 28px; }
+    p { color: #b8cadd; line-height: 1.6; font-size: 15px; }
+    button {
+      margin-top: 16px;
+      background: #ecd59e;
+      color: #14233c;
+      border: 0;
+      padding: 10px 18px;
+      border-radius: 8px;
+      font-weight: 650;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <div class="box">
+    <h1>Rhine Voice Avatar Presenter</h1>
+    <p>Voice-first AI presenter featuring live subtitles/captions, synchronized video playback, microphone voice input, and curated international logistics intelligence.</p>
+    <button onclick="if(window.rhineAvatar) window.rhineAvatar.open()">Open Voice Avatar</button>
+  </div>
+
+  <script src="avatar-widget.js"></script>
+  <script>
+    document.addEventListener("DOMContentLoaded", function () {
+      window.rhineAvatar = new RhineAvatarWidget({
+        endpoint: "/api/agent/chat",
+        videoSrc: "assets/presenter.mp4",
+        posterSrc: "assets/presenter-poster.jpg",
+        kbUrl: "kb.json",
+        title: "Rhine Voice Presenter",
+        language: "en",
+        autoOpen: true
+      });
+    });
+  </script>
+</body>
+</html>

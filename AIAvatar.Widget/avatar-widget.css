@@ -1,0 +1,1247 @@
+/**
+ * Rhine AI Avatar Presenter - Overlay Mode (D-ID / HeyGen style)
+ * Full portrait presenter video background with transparent floating captions & chat textbox.
+ * No bulky blue backgrounds, no microphone circles, no prompt buttons.
+ */
+
+:root {
+  --rhine-font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --rhine-gold: #ecd59e;
+  --rhine-gold-hover: #f4dcab;
+  --rhine-accent: #10b981;
+  --rhine-text-primary: #ffffff;
+  --rhine-text-muted: #cbd5e1;
+  --rhine-radius: 18px;
+  --rhine-overlay-bg: rgba(10, 20, 36, 0.75);
+  --rhine-overlay-border: rgba(255, 255, 255, 0.18);
+  --rhine-shadow: 0 20px 45px -10px rgba(0, 0, 0, 0.75), 0 0 0 1px rgba(255, 255, 255, 0.12);
+  --rhine-transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* ==========================================================================
+   Floating Launcher Button
+   ========================================================================== */
+.rhine-launcher {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 999990;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: rgba(10, 20, 36, 0.88);
+  color: var(--rhine-text-primary);
+  border: 1px solid var(--rhine-overlay-border);
+  border-radius: 9999px;
+  padding: 8px 16px 8px 8px;
+  box-shadow: var(--rhine-shadow);
+  cursor: pointer;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  transition: var(--rhine-transition);
+  font-family: var(--rhine-font);
+  user-select: none;
+}
+
+.rhine-launcher:hover {
+  transform: translateY(-2px);
+  border-color: var(--rhine-gold);
+  box-shadow: 0 12px 30px rgba(236, 213, 158, 0.3);
+}
+
+.rhine-launcher-avatar {
+  position: relative;
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  overflow: hidden;
+  border: 2px solid var(--rhine-gold);
+  flex-shrink: 0;
+  background: #172944;
+}
+
+.rhine-launcher-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.rhine-launcher-badge {
+  position: absolute;
+  bottom: 1px;
+  right: 1px;
+  width: 11px;
+  height: 11px;
+  background: var(--rhine-accent);
+  border: 2px solid #0a1424;
+  border-radius: 50%;
+  box-shadow: 0 0 8px var(--rhine-accent);
+}
+
+.rhine-launcher-text {
+  display: flex;
+  flex-direction: column;
+  text-align: left;
+}
+
+.rhine-launcher-title {
+  font-size: 13.5px;
+  font-weight: 650;
+  color: var(--rhine-text-primary);
+}
+
+.rhine-launcher-subtitle {
+  font-size: 11px;
+  color: var(--rhine-gold);
+}
+
+/* ==========================================================================
+   Main Avatar Card (Full-Height Video with Transparent Overlays)
+   ========================================================================== */
+.rhine-avatar-widget {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  width: 360px;
+  height: 520px;
+  max-width: calc(100vw - 32px);
+  max-height: calc(100vh - 48px);
+  border-radius: var(--rhine-radius);
+  box-shadow: var(--rhine-shadow);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  z-index: 999999;
+  overflow: hidden;
+  font-family: var(--rhine-font);
+  color: var(--rhine-text-primary);
+  border: 1px solid var(--rhine-overlay-border);
+  background: #091525;
+  transition: opacity 0.28s cubic-bezier(0.16, 1, 0.3, 1),
+              transform 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+  transform-origin: bottom right;
+}
+
+.rhine-avatar-widget.rhine-hidden {
+  opacity: 0;
+  pointer-events: none;
+  transform: scale(0.92) translateY(20px);
+}
+
+[dir="rtl"] .rhine-avatar-widget {
+  direction: rtl;
+  text-align: right;
+  right: auto;
+  left: 24px;
+  transform-origin: bottom left;
+}
+
+[dir="rtl"] .rhine-launcher {
+  right: auto;
+  left: 24px;
+}
+
+/* Background Presenter Video (fills 100% of the card) */
+.rhine-video-stage {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  z-index: 0;
+  background: #091525;
+}
+
+.rhine-video-stage video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center top;
+  display: block;
+}
+
+.rhine-video-fallback {
+  position: absolute;
+  inset: 0;
+  display: none;
+  background-size: cover;
+  background-position: center top;
+}
+
+.rhine-video-fallback.visible {
+  display: block;
+}
+
+/* Subtle gradient scrim so overlays are crystal clear */
+.rhine-video-scrim {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    180deg,
+    rgba(10, 20, 36, 0.65) 0%,
+    rgba(10, 20, 36, 0.05) 30%,
+    rgba(10, 20, 36, 0.15) 55%,
+    rgba(10, 20, 36, 0.85) 100%
+  );
+  pointer-events: none;
+}
+
+/* Speaking state — golden glow border pulse (lip-sync visual cue) */
+@keyframes rhineSpeakGlow {
+  0%, 100% {
+    box-shadow: var(--rhine-shadow), 0 0 12px 2px rgba(236, 213, 158, 0.25);
+  }
+  50% {
+    box-shadow: var(--rhine-shadow), 0 0 24px 6px rgba(236, 213, 158, 0.5), 0 0 48px 12px rgba(236, 213, 158, 0.15);
+  }
+}
+
+.rhine-avatar-widget.rhine-speaking {
+  animation: rhineSpeakGlow 1.5s ease-in-out infinite;
+  border-color: var(--rhine-gold) !important;
+}
+
+.rhine-avatar-widget.rhine-speaking .rhine-video-stage video {
+  filter: brightness(1.05) contrast(1.02);
+}
+
+.rhine-avatar-widget.rhine-speaking .rhine-sound-wave span {
+  animation-play-state: running;
+}
+
+.rhine-avatar-widget:not(.rhine-speaking) .rhine-sound-wave span {
+  animation-play-state: paused;
+}
+
+/* ==========================================================================
+   Transparent Top Bar
+   ========================================================================== */
+.rhine-top-bar {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 12px;
+  background: rgba(10, 20, 36, 0.45);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.rhine-top-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.rhine-top-title {
+  font-size: 13px;
+  font-weight: 650;
+  color: var(--rhine-text-primary);
+  letter-spacing: -0.01em;
+}
+
+.rhine-top-status {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 10px;
+  color: var(--rhine-gold);
+}
+
+.rhine-top-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.rhine-btn-icon {
+  background: rgba(15, 25, 45, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #ffffff;
+  border-radius: 8px;
+  width: 28px;
+  height: 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: var(--rhine-transition);
+  padding: 0;
+  backdrop-filter: blur(6px);
+}
+
+.rhine-btn-icon:hover {
+  background: rgba(255, 255, 255, 0.2);
+  border-color: var(--rhine-gold);
+  color: var(--rhine-gold);
+}
+
+.rhine-lang-btn {
+  background: rgba(15, 25, 45, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: var(--rhine-gold);
+  font-size: 11px;
+  font-weight: 650;
+  border-radius: 8px;
+  padding: 3px 8px;
+  cursor: pointer;
+  transition: var(--rhine-transition);
+  backdrop-filter: blur(6px);
+}
+
+.rhine-lang-btn:hover {
+  border-color: var(--rhine-gold);
+  background: rgba(255, 255, 255, 0.2);
+}
+
+/* ==========================================================================
+   Bottom Controls & Transparent Floating Caption & Chat Textbox
+   ========================================================================== */
+.rhine-bottom-container {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+}
+
+/* Transparent Floating Caption Box (Matches Reference Screenshot) */
+.rhine-caption-overlay {
+  background: var(--rhine-overlay-bg);
+  border: 1px solid var(--rhine-overlay-border);
+  border-radius: 14px;
+  padding: 10px 14px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  min-height: 58px;
+  max-height: 135px;
+  overflow-y: auto;
+  transition: var(--rhine-transition);
+}
+
+.rhine-caption-overlay.rhine-caption-hidden {
+  opacity: 0;
+  pointer-events: none;
+  max-height: 0;
+  min-height: 0;
+  padding: 0;
+  margin: 0;
+  border-width: 0;
+  overflow: hidden;
+  transform: translateY(10px);
+}
+
+.rhine-cc-btn {
+  font-size: 10.5px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  padding: 2px 6px;
+  width: auto;
+  min-width: 30px;
+  border-radius: 6px;
+}
+
+.rhine-cc-btn.active {
+  color: var(--rhine-gold);
+  border-color: var(--rhine-gold);
+  background: rgba(236, 213, 158, 0.25);
+  box-shadow: 0 0 8px rgba(236, 213, 158, 0.35);
+}
+
+.rhine-caption-overlay::-webkit-scrollbar {
+  width: 4px;
+}
+.rhine-caption-overlay::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.25);
+  border-radius: 4px;
+}
+
+.rhine-caption-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 4px;
+}
+
+.rhine-caption-badge {
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: var(--rhine-gold);
+  text-transform: uppercase;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.rhine-caption-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--rhine-accent);
+}
+
+.rhine-sound-wave {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  height: 10px;
+}
+
+.rhine-sound-wave span {
+  width: 2px;
+  height: 3px;
+  background: var(--rhine-gold);
+  border-radius: 1px;
+}
+
+.rhine-speaking .rhine-sound-wave span:nth-child(1) {
+  animation: rhineWave 0.5s ease-in-out infinite alternate;
+}
+.rhine-speaking .rhine-sound-wave span:nth-child(2) {
+  animation: rhineWave 0.5s ease-in-out 0.15s infinite alternate;
+}
+.rhine-speaking .rhine-sound-wave span:nth-child(3) {
+  animation: rhineWave 0.5s ease-in-out 0.3s infinite alternate;
+}
+
+@keyframes rhineWave {
+  0% { height: 3px; }
+  100% { height: 11px; }
+}
+
+.rhine-caption-content {
+  font-size: 13px;
+  line-height: 1.48;
+  color: #ffffff;
+  font-weight: 500;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6);
+  word-break: break-word;
+}
+
+/* Transparent Chat Textbox ("Write here...") */
+.rhine-chat-form {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(10, 20, 36, 0.85);
+  border: 1px solid var(--rhine-overlay-border);
+  border-radius: 9999px;
+  padding: 4px 6px 4px 14px;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+  transition: var(--rhine-transition);
+}
+
+.rhine-chat-form:focus-within {
+  border-color: var(--rhine-gold);
+  box-shadow: 0 0 0 2px rgba(236, 213, 158, 0.35);
+}
+
+.rhine-chat-input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  outline: none;
+  font-family: var(--rhine-font);
+  font-size: 13px;
+  color: #ffffff;
+  padding: 6px 0;
+}
+
+.rhine-chat-input::placeholder {
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.rhine-chat-mic {
+  background: rgba(255, 255, 255, 0.12);
+  color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+  padding: 0;
+  transition: var(--rhine-transition);
+}
+
+.rhine-chat-mic:hover {
+  background: rgba(236, 213, 158, 0.25);
+  border-color: var(--rhine-gold);
+  color: var(--rhine-gold);
+}
+
+.rhine-chat-mic.listening {
+  background: #ef4444;
+  color: #ffffff;
+  border-color: #ef4444;
+  animation: rhineMicPulse 1.2s infinite;
+}
+
+@keyframes rhineMicPulse {
+  0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.6); }
+  70% { box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+}
+
+.rhine-chat-send {
+  background: var(--rhine-gold);
+  color: #14233c;
+  border: none;
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+  padding: 0;
+  transition: var(--rhine-transition);
+}
+
+.rhine-chat-send:hover {
+  background: var(--rhine-gold-hover);
+  transform: scale(1.06);
+}
+
+.rhine-chat-send:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.rhine-legal-subtext {
+  font-size: 9.5px;
+  color: rgba(255, 255, 255, 0.7);
+  text-align: center;
+  line-height: 1.25;
+  user-select: none;
+  margin-top: 2px;
+}
+
+/* Responsive */
+@media (max-width: 480px) {
+  .rhine-avatar-widget {
+    width: calc(100vw - 20px);
+    right: 10px;
+    bottom: 10px;
+    height: 480px;
+  }
+  [dir="rtl"] .rhine-avatar-widget {
+    left: 10px;
+    right: auto;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rhine-avatar-widget,
+  .rhine-launcher,
+  .rhine-chat-send {
+    transition: none !important;
+    animation: none !important;
+  }
+}
+
+/* ==========================================================================
+   Mic Listening Overlay (shown while recording)
+   ========================================================================== */
+.rhine-mic-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  background: rgba(7, 15, 30, 0.82);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border-radius: var(--rhine-radius);
+  animation: rhineFadeIn 0.2s ease;
+}
+
+@keyframes rhineMicPulse {
+  0%, 100% { transform: scale(1); opacity: 1; box-shadow: 0 0 0 0 rgba(236, 213, 158, 0.5); }
+  50% { transform: scale(1.12); opacity: 0.9; box-shadow: 0 0 0 16px rgba(236, 213, 158, 0); }
+}
+
+.rhine-mic-pulse {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, rgba(236, 213, 158, 0.2), rgba(16, 185, 129, 0.15));
+  border: 2px solid var(--rhine-gold);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--rhine-gold);
+  cursor: pointer;
+  transition: transform 0.15s ease;
+  animation: rhineMicPulse 1.2s ease-in-out infinite;
+}
+
+.rhine-mic-pulse:hover {
+  transform: scale(1.08);
+}
+
+.rhine-mic-close {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  z-index: 25;
+}
+
+.rhine-mic-close:hover {
+  background: rgba(239, 68, 68, 0.4);
+  border-color: #ef4444;
+  transform: scale(1.1);
+}
+
+.rhine-mic-label {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--rhine-gold);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.rhine-mic-interim {
+  font-size: 13.5px;
+  color: #f1f5f9;
+  text-align: center;
+  max-width: 88%;
+  min-height: 22px;
+  font-style: italic;
+  line-height: 1.4;
+  background: rgba(0, 0, 0, 0.3);
+  padding: 4px 12px;
+  border-radius: 8px;
+}
+
+.rhine-mic-actions {
+  display: flex;
+  justify-content: center;
+}
+
+.rhine-mic-submit-btn {
+  display: none;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 18px;
+  background: linear-gradient(135deg, var(--rhine-gold), #dfbd76);
+  color: #0b1526;
+  font-size: 13px;
+  font-weight: 700;
+  font-family: var(--rhine-font);
+  border: none;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 14px rgba(236, 213, 158, 0.4);
+}
+
+.rhine-mic-submit-btn:hover {
+  transform: scale(1.05);
+  box-shadow: 0 6px 18px rgba(236, 213, 158, 0.6);
+}
+
+.rhine-mic-chips {
+  margin-top: 10px;
+  text-align: center;
+  max-width: 92%;
+}
+
+.rhine-mic-hint {
+  font-size: 11.5px;
+  color: rgba(236, 213, 158, 0.85);
+  margin-bottom: 8px;
+  font-weight: 500;
+}
+
+.rhine-mic-chip-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  justify-content: center;
+  max-height: 130px;
+  overflow-y: auto;
+}
+
+/* ==========================================================================
+   Speak Now Button (prominent shortcut between captions and input)
+   ========================================================================== */
+.rhine-speak-now-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  width: 100%;
+  padding: 9px 16px;
+  border: none;
+  border-radius: 10px;
+  background: linear-gradient(135deg, rgba(236, 213, 158, 0.18), rgba(16, 185, 129, 0.12));
+  border: 1px solid rgba(236, 213, 158, 0.3);
+  color: var(--rhine-gold);
+  font-size: 13px;
+  font-weight: 600;
+  font-family: var(--rhine-font);
+  cursor: pointer;
+  transition: var(--rhine-transition);
+  letter-spacing: 0.04em;
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  margin-bottom: 4px;
+}
+
+.rhine-speak-now-btn:hover {
+  background: linear-gradient(135deg, rgba(236, 213, 158, 0.28), rgba(16, 185, 129, 0.2));
+  border-color: var(--rhine-gold);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 16px rgba(236, 213, 158, 0.2);
+}
+
+.rhine-speak-now-btn.listening {
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.2), rgba(220, 38, 38, 0.15));
+  border-color: rgba(239, 68, 68, 0.6);
+  color: #fca5a5;
+  animation: rhineMicPulse 1s ease-in-out infinite;
+}
+
+.rhine-speak-now-btn svg {
+  flex-shrink: 0;
+}
+
+/* Mic button listening state (within input bar) */
+.rhine-chat-mic.listening {
+  background: rgba(239, 68, 68, 0.2);
+  border-color: rgba(239, 68, 68, 0.5);
+  color: #fca5a5;
+  animation: rhineMicPulse 1s ease-in-out infinite;
+}
+
+/* Mic button on staging page recording state */
+button#mic.recording {
+  outline: 2px solid rgba(239, 68, 68, 0.7);
+  outline-offset: 2px;
+}
+
+/* Customer Quick Question Chips */
+.rhine-quick-questions {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  padding: 3px 1px 6px 1px;
+  margin-bottom: 5px;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+
+.rhine-quick-questions::-webkit-scrollbar {
+  display: none;
+}
+
+.rhine-chip {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  padding: 5px 11px;
+  background: rgba(15, 23, 42, 0.65);
+  border: 1px solid rgba(236, 213, 158, 0.28);
+  border-radius: 999px;
+  color: #f1f5f9;
+  font-size: 11.5px;
+  font-weight: 500;
+  font-family: var(--rhine-font);
+  cursor: pointer;
+  white-space: nowrap;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  transition: all 0.2s ease;
+}
+
+.rhine-chip:hover {
+  background: rgba(236, 213, 158, 0.22);
+  border-color: var(--rhine-gold);
+  color: var(--rhine-gold);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(236, 213, 158, 0.2);
+}
+
+/* Customer Question vs AI Answer inside floating caption overlay */
+.rhine-caption-q {
+  font-size: 11.5px;
+  color: #e2e8f0;
+  margin-bottom: 6px;
+  padding-bottom: 5px;
+  border-bottom: 1px dashed rgba(236, 213, 158, 0.3);
+  line-height: 1.45;
+}
+
+.rhine-caption-q strong {
+  color: var(--rhine-gold);
+  font-weight: 600;
+  letter-spacing: 0.03em;
+}
+
+.rhine-caption-a {
+  line-height: 1.5;
+  color: rgba(255, 255, 255, 0.95);
+}
+
+/* Mic pulsing animation during active speech recording */
+@keyframes rhineMicPulse {
+  0%, 100% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4);
+  }
+  50% {
+    transform: scale(1.02);
+    box-shadow: 0 0 14px 3px rgba(239, 68, 68, 0.45);
+  }
+}
+
+/* ==========================================================================
+   Live Waveform Bars (driven by Web Audio API)
+   ========================================================================== */
+.rhine-live-wave {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  height: 44px;
+  width: 80%;
+  margin: 0 auto;
+}
+
+.rhine-wave-bar {
+  display: inline-block;
+  width: 4px;
+  height: 4px;
+  background: var(--rhine-gold);
+  border-radius: 3px;
+  transition: height 0.08s ease, opacity 0.08s ease;
+  opacity: 0.5;
+  animation: rhineLiveBarIdle 1.4s ease-in-out infinite;
+}
+
+/* Stagger idle animation so bars look alive even when silent */
+.rhine-wave-bar:nth-child(odd)  { animation-delay: 0s;     animation-duration: 1.2s; }
+.rhine-wave-bar:nth-child(even) { animation-delay: 0.35s;  animation-duration: 1.6s; }
+
+@keyframes rhineLiveBarIdle {
+  0%, 100% { height: 4px;  opacity: 0.35; }
+  50%       { height: 12px; opacity: 0.6;  }
+}
+
+/* ==========================================================================
+   Countdown Pill
+   ========================================================================== */
+.rhine-countdown {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: rgba(236, 213, 158, 0.7);
+  background: rgba(0, 0, 0, 0.3);
+  padding: 3px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(236, 213, 158, 0.2);
+  min-width: 100px;
+  text-align: center;
+  transition: color 0.4s ease;
+}
+
+/* ==========================================================================
+   Analyzing Dots Animation
+   ========================================================================== */
+.rhine-analyzing-dots {
+  display: inline-block;
+  color: var(--rhine-accent);
+  font-size: 16px;
+  letter-spacing: 4px;
+  animation: rhineAnalyzingPulse 1s ease-in-out infinite;
+}
+
+@keyframes rhineAnalyzingPulse {
+  0%, 100% { opacity: 1;   transform: scale(1);    }
+  50%       { opacity: 0.4; transform: scale(0.85); }
+}
+
+/* ==========================================================================
+   RHINE Meeting Request Flow Components & Review Modal
+   ========================================================================== */
+.rhine-meeting-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 8px;
+  width: 100%;
+}
+
+.rhine-meeting-chip {
+  background: rgba(236, 213, 158, 0.15);
+  border: 1px solid rgba(236, 213, 158, 0.4);
+  color: var(--rhine-gold);
+  border-radius: 20px;
+  padding: 6px 14px;
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  backdrop-filter: blur(8px);
+}
+
+.rhine-meeting-chip:hover {
+  background: var(--rhine-gold);
+  color: #0b1528;
+  transform: translateY(-1px);
+}
+
+.rhine-meeting-chip.secondary {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.2);
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.rhine-meeting-chip.secondary:hover {
+  background: rgba(255, 255, 255, 0.2);
+  color: #fff;
+}
+
+/* Modal Overlay covering widget */
+.rhine-modal-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 50;
+  background: rgba(7, 13, 26, 0.92);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border-radius: var(--rhine-radius);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  animation: rhineFadeIn 0.25s ease-out;
+}
+
+.rhine-modal-header {
+  padding: 13px 16px;
+  background: rgba(15, 26, 50, 0.65);
+  border-bottom: 1px solid rgba(236, 213, 158, 0.2);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.rhine-modal-title {
+  font-size: 14.5px;
+  font-weight: 700;
+  color: var(--rhine-gold);
+  letter-spacing: 0.02em;
+}
+
+.rhine-modal-close-btn {
+  background: none;
+  border: none;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 16px;
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: 4px;
+  transition: color 0.15s ease;
+}
+
+.rhine-modal-close-btn:hover {
+  color: #fff;
+}
+
+.rhine-modal-body {
+  padding: 13px 16px;
+  overflow-y: auto;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  font-size: 12.5px;
+}
+
+.rhine-modal-intro {
+  color: rgba(255, 255, 255, 0.82);
+  font-size: 12px;
+  line-height: 1.4;
+  margin-bottom: 2px;
+}
+
+.rhine-review-table {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  background: rgba(0, 0, 0, 0.35);
+  border: 1px solid rgba(236, 213, 158, 0.2);
+  border-radius: 10px;
+  padding: 10px 12px;
+}
+
+.rhine-review-row {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  padding-bottom: 6px;
+}
+
+.rhine-review-row:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.rhine-review-label {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--rhine-gold);
+}
+
+.rhine-review-val {
+  color: #f8fafc;
+  font-size: 12.5px;
+  line-height: 1.35;
+  word-break: break-word;
+  white-space: pre-wrap;
+}
+
+.rhine-modal-footer {
+  padding: 12px 16px;
+  background: rgba(15, 26, 50, 0.7);
+  border-top: 1px solid rgba(236, 213, 158, 0.2);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.rhine-btn-group {
+  display: flex;
+  gap: 8px;
+  width: 100%;
+}
+
+.rhine-modal-btn {
+  flex: 1;
+  padding: 9px 12px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-align: center;
+  border: none;
+}
+
+.rhine-modal-btn.primary {
+  background: linear-gradient(135deg, #ecd59e, #d8bc78);
+  color: #081120;
+  box-shadow: 0 4px 12px rgba(236, 213, 158, 0.25);
+}
+
+.rhine-modal-btn.primary:hover:not(:disabled) {
+  background: linear-gradient(135deg, #f4e3b8, #e5cb88);
+  transform: translateY(-1px);
+}
+
+.rhine-modal-btn.secondary {
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+}
+
+.rhine-modal-btn.secondary:hover {
+  background: rgba(255, 255, 255, 0.18);
+}
+
+.rhine-modal-btn.cancel {
+  background: transparent;
+  color: rgba(255, 255, 255, 0.65);
+  font-weight: 500;
+  padding: 6px;
+}
+
+.rhine-modal-btn.cancel:hover {
+  color: #ef4444;
+}
+
+.rhine-modal-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Edit Form inside modal */
+.rhine-edit-form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.rhine-edit-field {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.rhine-edit-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--rhine-gold);
+}
+
+.rhine-edit-input,
+.rhine-edit-textarea {
+  background: rgba(0, 0, 0, 0.4);
+  border: 1px solid rgba(236, 213, 158, 0.3);
+  border-radius: 6px;
+  padding: 7px 10px;
+  color: #fff;
+  font-size: 12px;
+  font-family: inherit;
+  outline: none;
+  transition: border-color 0.2s ease;
+}
+
+.rhine-edit-input:focus,
+.rhine-edit-textarea:focus {
+  border-color: var(--rhine-gold);
+}
+
+.rhine-edit-textarea {
+  min-height: 60px;
+  resize: vertical;
+}
+
+/* ==========================================================================
+   Meeting Request Flow — table-based review & chip helpers
+   ========================================================================== */
+
+/* The JS renders a <table> inside .rhine-review-table */
+.rhine-review-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.rhine-review-table tr {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.rhine-review-table tr:last-child {
+  border-bottom: none;
+}
+
+.rhine-review-table td {
+  padding: 7px 4px;
+  vertical-align: top;
+  font-size: 12.5px;
+  line-height: 1.4;
+}
+
+/* Label cell — gold, uppercase */
+.rhine-review-label {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--rhine-gold);
+  white-space: nowrap;
+  padding-right: 12px;
+  width: 40%;
+}
+
+/* Value cell — white text (alias for old .rhine-review-val) */
+.rhine-review-value,
+.rhine-review-val {
+  color: #f8fafc;
+  word-break: break-word;
+  white-space: pre-wrap;
+}
+
+/* Meeting offer chips container */
+.rhine-meeting-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 6px 12px 8px;
+  justify-content: center;
+}
+
+/* Individual meeting chips */
+.rhine-meeting-chip {
+  padding: 9px 18px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: none;
+  font-family: var(--rhine-font);
+  letter-spacing: 0.01em;
+}
+
+.rhine-meeting-chip.primary {
+  background: linear-gradient(135deg, #ecd59e, #d8bc78);
+  color: #081120;
+  box-shadow: 0 4px 12px rgba(236, 213, 158, 0.25);
+}
+
+.rhine-meeting-chip.primary:hover {
+  background: linear-gradient(135deg, #f4e3b8, #e5cb88);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(236, 213, 158, 0.35);
+}
+
+.rhine-meeting-chip.secondary {
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+}
+
+.rhine-meeting-chip.secondary:hover {
+  background: rgba(255, 255, 255, 0.18);
+}
+
+/* Quick-chip meeting button — gold accent style */
+.rhine-chip.rhine-chip-meeting {
+  background: linear-gradient(135deg, rgba(236, 213, 158, 0.22), rgba(236, 213, 158, 0.10));
+  border: 1px solid var(--rhine-gold);
+  color: var(--rhine-gold);
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.rhine-chip.rhine-chip-meeting:hover {
+  background: linear-gradient(135deg, rgba(236, 213, 158, 0.40), rgba(236, 213, 158, 0.22));
+  box-shadow: 0 4px 14px rgba(236, 213, 158, 0.35);
+  transform: translateY(-2px);
+  color: #fff;
+}
